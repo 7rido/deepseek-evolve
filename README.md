@@ -1,6 +1,6 @@
 # deepseek-evolve
 
-A local DeepSeek-R1 distill (via MLX on Apple Silicon) that improves itself in two ways, with one eval gate deciding what sticks:
+A local Qwen 3.5 9B student (via MLX on Apple Silicon) that improves itself in two ways, with one eval gate deciding what sticks:
 
 - **Loop A — self-fine-tuning.** Run tasks, keep the verified successes, LoRA-train a candidate adapter, promote it only if it beats the champion on held-out tasks.
 - **Loop B — innovation.** The model proposes a change to its own harness (prompt, decoding, tools) on a git branch; the same gate decides whether it merges.
