@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.egg-info/
+# run-time state: never part of a harness commit
+data/
+adapters/
+experiments/log.jsonl
+experiments/NOTEBOOK.md
+.env

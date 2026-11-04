@@ -1,0 +1,3 @@
+# Loop B may tune these. Read at call time by harness_loader.
+temperature: 0.2
+prefill: ""

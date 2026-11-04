@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Reject commits on exp/* branches that touch anything outside harness/ or any protected path.
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+case "$branch" in exp/*) ;; *) exit 0 ;; esac
+protected="config.yaml evolve/evals.py evolve/sandbox.py evolve/experiments.py evolve/adapters.py tasks/eval_tasks.jsonl scripts/pre-commit"
+status=0
+while read -r f; do
+  case "$f" in harness/*) ;; *) echo "pre-commit: $f is outside harness/ (blocked on $branch)"; status=1 ;; esac
+  for p in $protected; do [ "$f" = "$p" ] && { echo "pre-commit: $f is protected"; status=1; }; done
+done < <(git diff --cached --name-only)
+exit $status

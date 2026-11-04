@@ -1,0 +1,67 @@
+# deepseek-evolve configuration
+# Everything the loops may NOT change lives here. Protected by the pre-commit hook.
+
+model:
+  base: mlx-community/Qwen3.5-9B-MLX-4bit   # student; swap for mlx-community/Qwen3.5-4B-MLX-4bit (or the R1 1.5B distill) to shake out the pipeline fast
+  max_tokens: 2048
+  judge_temperature: 0.0          # frozen-base judge is deterministic
+
+paths:
+  harness: harness                # the ONLY directory Loop B may edit
+  adapters: adapters
+  trajectories: data/trajectories
+  sft: data/sft
+  experiments: experiments
+  seed_tasks: tasks/seed_tasks.jsonl
+  eval_tasks: tasks/eval_tasks.jsonl
+
+collect:
+  samples_per_task: 4
+  temperature: 0.7
+  max_trajectory_tokens: 4000
+
+filter:
+  min_score: 1.0                  # keep only verified successes
+  max_per_task: 2                 # cap so easy tasks cannot dominate
+  min_examples_to_train: 200
+  valid_fraction: 0.1
+
+train:
+  lora_rank: 8
+  lora_layers: 16
+  iters: 600
+  learning_rate: 1.0e-5
+  batch_size: 2
+  max_seq_length: 2048
+  max_generations_from_base: 5    # after this many promotions, retrain from base on the full dataset
+
+gate:
+  seeds: 3
+  promote_margin: 2.0             # candidate must beat champion by this many points (0-100 scale)
+  must_pass_tag: must_pass        # tasks with this tag may never regress
+  timeout_seconds: 60
+
+experiments:
+  max_per_cycle: 5
+  wall_clock_minutes: 30
+  branch_prefix: exp/
+
+sandbox:
+  image: python:3.12-slim
+  timeout_seconds: 60
+  memory: 2g
+  network: none
+
+apis:
+  # Keys come from .env (DEEPSEEK_API_KEY, ANTHROPIC_API_KEY), never from here.
+  deepseek_base_url: https://api.deepseek.com
+  deepseek_teacher_model: deepseek-reasoner     # api.deepseek.com alias for its current reasoning model (V4.1 Flash as of Nov 2026); use a dated id if their docs list one
+  deepseek_critic_model: deepseek-reasoner
+  anthropic_model: claude-sonnet-5-5            # investigator: proposes experiments, writes the notebook
+  anthropic_max_tokens: 4096
+  timeout_seconds: 180
+
+teacher:
+  enabled: true                   # requires DEEPSEEK_API_KEY
+  max_attempts_per_task: 2        # teacher tries at most this many times per failed task
+  only_on_student_failure: true   # ask the teacher only where the student scored 0 on every sample
